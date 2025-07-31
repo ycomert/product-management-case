@@ -1,0 +1,541 @@
+{
+  "info": {
+    "name": "E-Commerce Backend API",
+    "description": "Comprehensive E-Commerce Platform API Collection",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password123!\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.status === 'Created') {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', response.data.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.status === 'OK') {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', response.data.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["categories"]
+            }
+          }
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/categories/{{category_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["categories", "{{category_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Category (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Electronics\",\n  \"description\": \"Electronic devices and accessories\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["categories"]
+            }
+          }
+        },
+        {
+          "name": "Update Category (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Electronics\",\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/categories/{{category_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["categories", "{{category_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Category (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/categories/{{category_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["categories", "{{category_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Get All Products",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/products?page=1&limit=10&sortBy=createdAt&sortOrder=DESC",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "DESC"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Products",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/products?search=iPhone&minPrice=100&maxPrice=1000&inStock=true",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "iPhone"
+                },
+                {
+                  "key": "minPrice",
+                  "value": "100"
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "1000"
+                },
+                {
+                  "key": "inStock",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["products", "{{product_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Product (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"iPhone 15 Pro\",\n  \"description\": \"Latest iPhone with advanced features\",\n  \"price\": 999.99,\n  \"stock\": 50,\n  \"categoryId\": \"{{category_id}}\",\n  \"imageUrl\": \"https://example.com/image.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/products",
+              "host": ["{{base_url}}"],
+              "path": ["products"]
+            }
+          }
+        },
+        {
+          "name": "Update Product (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 899.99,\n  \"stock\": 75\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["products", "{{product_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Product (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["products", "{{product_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Low Stock Products (Admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/products/low-stock?threshold=5",
+              "host": ["{{base_url}}"],
+              "path": ["products", "low-stock"],
+              "query": [
+                {
+                  "key": "threshold",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Increase Stock (Admin)",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{base_url}}/products/{{product_id}}/stock/increase?quantity=10",
+              "host": ["{{base_url}}"],
+              "path": ["products", "{{product_id}}", "stock", "increase"],
+              "query": [
+                {
+                  "key": "quantity",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Decrease Stock (Admin)",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{base_url}}/products/{{product_id}}/stock/decrease?quantity=5",
+              "host": ["{{base_url}}"],
+              "path": ["products", "{{product_id}}", "stock", "decrease"],
+              "query": [
+                {
+                  "key": "quantity",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"productId\": \"{{product_id}}\",\n      \"quantity\": 2\n    }\n  ],\n  \"shippingAddress\": \"123 Main St, City, State, 12345\",\n  \"notes\": \"Please call when arrived\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders",
+              "host": ["{{base_url}}"],
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "Get All Orders",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/orders?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["orders"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Order History",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/orders/history?status=pending",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "history"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Order Status (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Order",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}", "cancel"]
+            }
+          }
+        },
+        {
+          "name": "Get Order Statistics (Admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/orders/stats",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "stats"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Upload",
+      "item": [
+        {
+          "name": "Upload Image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/upload/image",
+              "host": ["{{base_url}}"],
+              "path": ["upload", "image"]
+            }
+          }
+        },
+        {
+          "name": "Bulk Upload Products (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/upload/bulk-products",
+              "host": ["{{base_url}}"],
+              "path": ["upload", "bulk-products"]
+            }
+          }
+        },
+        {
+          "name": "Download Template (Admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/upload/template",
+              "host": ["{{base_url}}"],
+              "path": ["upload", "template"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -113,4 +113,18 @@ export class OrdersController {
   cancel(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
     return this.ordersService.cancel(id, user);
   }
+
+  @Post(':id/process-payment')
+  @ApiOperation({ summary: 'Process payment for an order' })
+  @ApiResponse({ status: 200, description: 'Payment processed successfully' })
+  @ApiResponse({ status: 400, description: 'Payment failed or order not in pending status' })
+  @ApiResponse({ status: 403, description: 'Access denied to process payment for this order' })
+  @ApiResponse({ status: 404, description: 'Order not found' })
+  processPayment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { paymentIntentId: string },
+    @CurrentUser() user: User
+  ) {
+    return this.ordersService.processPayment(id, body.paymentIntentId, user);
+  }
 }

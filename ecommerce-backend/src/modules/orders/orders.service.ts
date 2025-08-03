@@ -6,6 +6,7 @@ import { OrderItem } from '../../entities/order-item.entity';
 import { User } from '../../entities/user.entity';
 import { CreateOrderDto, UpdateOrderStatusDto, OrderFilterDto } from '../../dto/order';
 import { ProductsService } from '../products/products.service';
+import { PaymentsService } from '../payments/payments.service';
 import { OrderStatus } from '../../common/enums/order-status.enum';
 import { UserRole } from '../../common/enums/user-role.enum';
 
@@ -25,6 +26,7 @@ export class OrdersService {
     @InjectRepository(OrderItem)
     private orderItemRepository: Repository<OrderItem>,
     private productsService: ProductsService,
+    private paymentsService: PaymentsService,
     private dataSource: DataSource,
   ) {}
 
@@ -88,6 +90,34 @@ export class OrdersService {
 
       return orderWithRelations;
     });
+  }
+
+  async processPayment(orderId: string, paymentIntentId: string, user: User): Promise<Order> {
+    const order = await this.findOne(orderId, user);
+    
+    if (order.userId !== user.id && user.role !== UserRole.ADMIN) {
+      throw new ForbiddenException('You can only process payments for your own orders');
+    }
+
+    if (order.status !== OrderStatus.PENDING) {
+      throw new BadRequestException('Order is not in pending status');
+    }
+
+    // Verify payment with Stripe
+    const paymentIntent = await this.paymentsService.confirmPayment(paymentIntentId);
+    
+    if (paymentIntent.status !== 'succeeded') {
+      throw new BadRequestException('Payment not completed successfully');
+    }
+
+    // Update order status to confirmed
+    order.status = OrderStatus.CONFIRMED;
+    order.paymentIntentId = paymentIntentId;
+    order.paidAt = new Date();
+    
+    const updatedOrder = await this.orderRepository.save(order);
+    
+    return this.findOne(orderId, user);
   }
 
   async findAll(filterDto: OrderFilterDto, user?: User): Promise<PaginatedResult<Order>> {

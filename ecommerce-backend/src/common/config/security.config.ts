@@ -35,7 +35,7 @@ export function configureSecurityHeaders(app: INestApplication): void {
   // Rate limiting
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 500, // limit each IP to 500 requests per windowMs (increased from 100)
     message: {
       error: 'Too many requests',
       message: 'Too many requests from this IP, please try again later.',
@@ -60,7 +60,7 @@ export function configureSecurityHeaders(app: INestApplication): void {
   // Stricter rate limiting for auth routes
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // limit each IP to 5 auth requests per windowMs
+    max: 20, // limit each IP to 20 auth requests per windowMs (increased from 5)
     message: {
       error: 'Too many authentication attempts',
       message: 'Too many authentication attempts, please try again later.',

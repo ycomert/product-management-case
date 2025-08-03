@@ -29,6 +29,12 @@ export class Order extends BaseEntity {
   @Column({ nullable: true })
   notes: string;
 
+  @Column({ nullable: true })
+  paymentIntentId: string;
+
+  @Column({ nullable: true })
+  paidAt: Date;
+
   @OneToMany(() => OrderItem, orderItem => orderItem.order, { cascade: true })
   orderItems: OrderItem[];
 }

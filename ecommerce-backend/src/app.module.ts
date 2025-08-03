@@ -11,6 +11,7 @@ import { ProductsModule } from './modules/products/products.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { UploadModule } from './modules/upload/upload.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 import { SanitizationMiddleware } from './common/middleware/sanitization.middleware';
 
 @Module({
@@ -36,7 +37,7 @@ import { SanitizationMiddleware } from './common/middleware/sanitization.middlew
     }),
     ThrottlerModule.forRoot([{
       ttl: 60000,
-      limit: 10,
+      limit: 50, // Increased from 10 to 50 requests per minute
     }]),
     AuthModule,
     UsersModule,
@@ -44,6 +45,7 @@ import { SanitizationMiddleware } from './common/middleware/sanitization.middlew
     CategoriesModule,
     OrdersModule,
     UploadModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

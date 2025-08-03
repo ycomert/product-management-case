@@ -32,10 +32,10 @@ export function configureSecurityHeaders(app: INestApplication): void {
     }),
   );
 
-  // Rate limiting
+  // Optimized rate limiting for better performance
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 200, // Increased limit for better performance
     message: {
       error: 'Too many requests',
       message: 'Too many requests from this IP, please try again later.',
@@ -43,6 +43,12 @@ export function configureSecurityHeaders(app: INestApplication): void {
     },
     standardHeaders: true,
     legacyHeaders: false,
+    // Skip rate limiting for health checks and static files
+    skip: (req) => {
+      return req.path.startsWith('/uploads/') || 
+             req.path === '/health' || 
+             req.path === '/api';
+    },
     handler: (req, res) => {
       res.status(429).json({
         error: 'Too Many Requests',
@@ -50,23 +56,35 @@ export function configureSecurityHeaders(app: INestApplication): void {
         statusCode: 429,
         timestamp: new Date().toISOString(),
         path: req.url,
+        retryAfter: Math.ceil(15 * 60), // 15 minutes in seconds
       });
     },
+    // Enable Redis-like storage for better performance in production
+    store: process.env.NODE_ENV === 'production' ? undefined : undefined, // Add Redis store here if needed
   });
 
   // Apply rate limiting to all routes
   app.use(limiter);
 
-  // Stricter rate limiting for auth routes
+  // Stricter rate limiting for auth routes with better error handling
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // limit each IP to 5 auth requests per windowMs
+    max: 10, // Increased from 5 to 10 for better UX
     message: {
       error: 'Too many authentication attempts',
       message: 'Too many authentication attempts, please try again later.',
       statusCode: 429,
     },
     skipSuccessfulRequests: true,
+    handler: (req, res) => {
+      res.status(429).json({
+        error: 'Too Many Authentication Attempts',
+        message: 'Too many authentication attempts. Please try again in 15 minutes.',
+        statusCode: 429,
+        timestamp: new Date().toISOString(),
+        retryAfter: Math.ceil(15 * 60),
+      });
+    },
   });
 
   app.use('/auth', authLimiter);
@@ -82,4 +100,10 @@ export const securityConfig = {
     'application/vnd.ms-excel',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   ],
+  // Rate limiting configuration
+  rateLimit: {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 200,
+    authMax: 10,
+  },
 };

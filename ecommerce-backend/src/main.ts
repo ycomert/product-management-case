@@ -11,11 +11,13 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ResponseTransformInterceptor } from './common/interceptors/response-transform.interceptor';
 import { SanitizationPipe } from './common/pipes/sanitization.pipe';
 import { configureSecurityHeaders } from './common/config/security.config';
+import { getEnvironmentConfig } from './common/config/performance.config';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
   const httpAdapterHost = app.get(HttpAdapterHost);
+  const envConfig = getEnvironmentConfig();
 
   // Serve static files
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
@@ -37,11 +39,17 @@ async function bootstrap() {
   // Global exception filter
   app.useGlobalFilters(new GlobalExceptionFilter(httpAdapterHost));
 
-  // Global interceptors
-  app.useGlobalInterceptors(
-    new LoggingInterceptor(),
+  // Global interceptors with performance monitoring
+  const interceptors = [
     new ResponseTransformInterceptor(),
-  );
+  ];
+
+  // Only add logging interceptor in development
+  if (envConfig.enableLogging) {
+    interceptors.unshift(new LoggingInterceptor());
+  }
+
+  app.useGlobalInterceptors(...interceptors);
 
   // Global pipes
   app.useGlobalPipes(
@@ -58,19 +66,27 @@ async function bootstrap() {
     }),
   );
 
-  const config = new DocumentBuilder()
-    .setTitle('E-Commerce API')
-    .setDescription('E-Commerce Platform API Documentation')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  // Swagger configuration (only in development)
+  if (envConfig.enableSwagger) {
+    const config = new DocumentBuilder()
+      .setTitle('E-Commerce API')
+      .setDescription('E-Commerce Platform API Documentation')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, document);
+  }
 
   const port = configService.get('PORT') || 3000;
   await app.listen(port);
+  
   console.log(`Application is running on: http://localhost:${port}`);
-  console.log(`Swagger documentation: http://localhost:${port}/api`);
+  if (envConfig.enableSwagger) {
+    console.log(`Swagger documentation: http://localhost:${port}/api`);
+  }
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Rate limit: ${envConfig.rateLimit.max} requests per ${envConfig.rateLimit.windowMs / 1000 / 60} minutes`);
 }
 bootstrap();

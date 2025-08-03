@@ -30,13 +30,24 @@ import { SanitizationMiddleware } from './common/middleware/sanitization.middlew
         database: configService.get('DATABASE_NAME'),
         entities: [User, Category, Product, Order, OrderItem],
         synchronize: true,
-        logging: true,
+        logging: process.env.NODE_ENV !== 'production', // Disable logging in production for better performance
+        // Add connection pool configuration for better performance
+        extra: {
+          max: 20, // Maximum number of connections
+          min: 5,  // Minimum number of connections
+          acquire: 30000, // Maximum time to acquire connection
+          idle: 10000, // Maximum time connection can be idle
+        },
       }),
       inject: [ConfigService],
     }),
+    // Optimized throttler configuration for better performance
     ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 10,
+      ttl: 60000, // 1 minute
+      limit: 30, // Increased from 10 to 30 for better performance
+    }, {
+      ttl: 300000, // 5 minutes
+      limit: 100, // Additional limit for 5-minute window
     }]),
     AuthModule,
     UsersModule,

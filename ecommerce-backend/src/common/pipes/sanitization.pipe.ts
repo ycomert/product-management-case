@@ -1,4 +1,4 @@
-import { PipeTransform, Injectable, ArgumentMetadata, BadRequestException } from '@nestjs/common';
+import { PipeTransform, Injectable, ArgumentMetadata, HttpException, HttpStatus } from '@nestjs/common';
 import { filterXSS } from 'xss';
 
 @Injectable()
@@ -45,13 +45,13 @@ export class SanitizationPipe implements PipeTransform {
     // Check for potential SQL injection
     const sqlPatterns = /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT)\b)/gi;
     if (sqlPatterns.test(sanitized)) {
-      throw new BadRequestException('Invalid input detected');
+      throw new HttpException('Invalid input detected', HttpStatus.BAD_REQUEST);
     }
 
     // Check for NoSQL injection patterns
     const nosqlPatterns = /(\$where|\$ne|\$gt|\$lt|\$in|\$nin|\$or|\$and)/gi;
     if (nosqlPatterns.test(sanitized)) {
-      throw new BadRequestException('Invalid input detected');
+      throw new HttpException('Invalid input detected', HttpStatus.BAD_REQUEST);
     }
 
     return sanitized.trim();

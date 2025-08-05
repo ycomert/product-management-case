@@ -1,17 +1,17 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../src/app.module';
-import { CategoriesService } from '../src/modules/categories/categories.service';
-import { UsersService } from '../src/modules/users/users.service';
-import { ProductsService } from '../src/modules/products/products.service';
-import { UserRole } from '../src/common/enums/user-role.enum';
-import { Category } from '../src/entities/category.entity';
+import { CategoryService } from '../src/domain/categories/category.service';
+import { UsersService } from '../src/domain/users/users.service';
+import { ProductsService } from '../src/domain/products/products.service';
+import { UserRole } from '../src/domain/users/enums';
+import { Category } from '../src/domain/categories/repository/entity/category.entity';
 
 async function seed() {
   console.log('🌱 Starting database seeding...');
 
   const app = await NestFactory.createApplicationContext(AppModule);
   
-  const categoriesService = app.get(CategoriesService);
+  const categoriesService = app.get(CategoryService);
   const usersService = app.get(UsersService);
   const productsService = app.get(ProductsService);
 
@@ -30,7 +30,7 @@ async function seed() {
 
     for (const categoryInfo of categoryData) {
       try {
-        const category = await categoriesService.create(categoryInfo);
+        const category = await categoriesService.createCategory(categoryInfo);
         categories.push(category);
         console.log(`✅ Created category: ${category.name}`);
       } catch (error) {
@@ -41,11 +41,12 @@ async function seed() {
     // Create admin user
     console.log('👤 Creating admin user...');
     try {
-      await usersService.create({
+      await usersService.createUser({
         email: 'admin@ecommerce.com',
         password: 'Admin123!',
         firstName: 'Admin',
         lastName: 'User',
+        role: UserRole.ADMIN,
       });
       console.log('✅ Created admin user: admin@ecommerce.com');
     } catch (error) {
@@ -55,11 +56,12 @@ async function seed() {
     // Create sample user
     console.log('👥 Creating sample customer...');
     try {
-      await usersService.create({
+      await usersService.createUser({
         email: 'customer@example.com',
         password: 'Customer123!',
         firstName: 'John',
         lastName: 'Doe',
+        role: UserRole.CUSTOMER,
       });
       console.log('✅ Created customer user: customer@example.com');
     } catch (error) {
@@ -141,7 +143,7 @@ async function seed() {
         const category = categories.find(c => c.name === productData.categoryName);
         if (category) {
           const { categoryName, ...productInfo } = productData;
-          await productsService.create({
+          await productsService.createProduct({
             ...productInfo,
             categoryId: category.id,
           });

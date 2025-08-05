@@ -29,6 +29,8 @@ Modern ve güvenli e-ticaret platformu için geliştirilmiş kapsamlı backend A
 - CSV/Excel toplu ürün içe aktarma
 - Güvenli dosya validasyonu
 - Otomatik hata raporlama
+- Otomatik uploads klasörü oluşturma
+- CSV template indirme ve toplu yükleme
 
 ### 🔒 Güvenlik
 - Input sanitization (XSS, SQL Injection koruması)
@@ -95,6 +97,10 @@ FRONTEND_URL=http://localhost:3001
 # Upload
 UPLOAD_FOLDER=uploads
 MAX_FILE_SIZE=5242880
+
+# Admin Credentials (for testing)
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=admin123
 ```
 
 ### 4. Veritabanını Hazırlayın
@@ -129,7 +135,7 @@ http://localhost:3000/api
 ### Ana Endpoint'ler
 
 #### 🔐 Authentication
-- `POST /auth/register` - Kullanıcı kaydı
+- `POST /auth/register` - Kullanıcı kaydı (role: customer | admin)
 - `POST /auth/login` - Kullanıcı girişi
 
 #### 👥 Users
@@ -193,6 +199,12 @@ GET /orders?status=pending&startDate=2024-01-01&endDate=2024-12-31&page=1&limit=
 - Password strength validation
 - Secure password hashing
 
+### Exception Handling
+- Standardized HTTP exception handling using HttpStatus enum
+- Comprehensive error responses with correlation IDs
+- Automatic logging with severity levels
+- Production-safe error messages
+
 ### Security Headers
 - Content Security Policy (CSP)
 - HTTP Strict Transport Security (HSTS)
@@ -210,30 +222,69 @@ GET /orders?status=pending&startDate=2024-01-01&endDate=2024-12-31&page=1&limit=
 src/
 ├── common/                 # Ortak bileşenler
 │   ├── config/            # Konfigürasyon dosyaları
+│   │   ├── multer.config.ts
+│   │   └── security.config.ts
 │   ├── decorators/        # Custom decorator'lar
-│   ├── enums/             # Enum tanımları
+│   │   ├── current-user.decorator.ts
+│   │   └── roles.decorator.ts
+│   ├── entity/            # Base entity
+│   │   └── base.entity.ts
 │   ├── filters/           # Exception filter'lar
+│   │   └── global-exception.filter.ts
 │   ├── guards/            # Auth guard'lar
+│   │   ├── jwt-auth.guard.ts
+│   │   ├── local-auth.guard.ts
+│   │   └── roles.guard.ts
 │   ├── interceptors/      # HTTP interceptor'lar
+│   │   ├── logging.interceptor.ts
+│   │   └── response-transform.interceptor.ts
 │   ├── middleware/        # Custom middleware'ler
+│   │   └── sanitization.middleware.ts
 │   ├── pipes/             # Validation pipe'lar
+│   │   └── sanitization.pipe.ts
 │   └── utils/             # Yardımcı fonksiyonlar
-├── dto/                   # Data Transfer Objects
-│   ├── auth/             # Auth DTO'ları
-│   ├── category/         # Category DTO'ları
-│   ├── order/            # Order DTO'ları
-│   ├── product/          # Product DTO'ları
-│   └── upload/           # Upload DTO'ları
-├── entities/             # TypeORM entity'leri
-├── modules/              # Ana modüller
-│   ├── auth/            # Authentication modülü
-│   ├── categories/      # Kategori yönetimi
-│   ├── orders/          # Sipariş yönetimi
-│   ├── products/        # Ürün yönetimi
-│   ├── upload/          # Dosya yükleme
-│   └── users/           # Kullanıcı yönetimi
-├── app.module.ts        # Ana uygulama modülü
-└── main.ts              # Uygulama giriş noktası
+│       └── security.utils.ts
+├── domain/                # Domain modülleri
+│   ├── auth/             # Authentication
+│   │   ├── auth.controller.ts
+│   │   ├── auth.module.ts
+│   │   ├── auth.service.ts
+│   │   ├── dto/          # Auth DTO'ları
+│   │   └── strategies/   # Passport strategies
+│   ├── categories/       # Kategori yönetimi
+│   │   ├── category.controller.ts
+│   │   ├── category.module.ts
+│   │   ├── category.service.ts
+│   │   ├── dto/          # Category DTO'ları
+│   │   └── repository/   # Repository pattern
+│   ├── orders/           # Sipariş yönetimi
+│   │   ├── orders.controller.ts
+│   │   ├── orders.module.ts
+│   │   ├── orders.service.ts
+│   │   ├── dto/          # Order DTO'ları
+│   │   ├── enums/        # Order status enums
+│   │   └── repository/   # Repository pattern
+│   ├── products/         # Ürün yönetimi
+│   │   ├── products.controller.ts
+│   │   ├── products.module.ts
+│   │   ├── products.service.ts
+│   │   ├── dto/          # Product DTO'ları
+│   │   └── repository/   # Repository pattern
+│   ├── upload/           # Dosya yükleme
+│   │   ├── upload.controller.ts
+│   │   ├── upload.module.ts
+│   │   ├── upload.service.ts
+│   │   └── dto/          # Upload DTO'ları
+│   └── users/            # Kullanıcı yönetimi
+│       ├── users.controller.ts  # Users controller
+│       ├── users.module.ts
+│       ├── users.service.ts
+│       ├── enums/        # User role enums
+│       └── repository/   # Repository pattern
+├── app.controller.ts      # Ana controller
+├── app.module.ts         # Ana uygulama modülü
+├── app.service.ts        # Ana service
+└── main.ts               # Uygulama giriş noktası
 ```
 
 ## 🧪 Test
@@ -266,7 +317,50 @@ Samsung Galaxy S24,Android flagship,899.99,30,Electronics,https://example.com/im
 - `categoryName`: Kategori adı (yoksa otomatik oluşturulur)
 - `imageUrl`: Görsel URL'i (opsiyonel)
 
-## 🔄 Sipariş Durumları
+## 🔧 API Kullanım Örnekleri
+
+### Kullanıcı Kaydı
+```bash
+# Customer kaydı
+curl -X POST http://localhost:3000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "customer@example.com",
+    "password": "password123",
+    "firstName": "John",
+    "lastName": "Doe",
+    "role": "customer"
+  }'
+
+# Admin kaydı
+curl -X POST http://localhost:3000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@example.com",
+    "password": "admin123",
+    "firstName": "Admin",
+    "lastName": "User",
+    "role": "admin"
+  }'
+```
+
+### Kullanıcı Girişi
+```bash
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@example.com",
+    "password": "admin123"
+  }'
+```
+
+### Profil Görüntüleme
+```bash
+curl -X GET http://localhost:3000/users/profile \
+  -H "Authorization: Bearer <JWT_TOKEN>"
+```
+
+## �� Sipariş Durumları
 
 ```
 PENDING → CONFIRMED → SHIPPED → DELIVERED
@@ -279,6 +373,26 @@ CANCELLED  CANCELLED
 - **SHIPPED**: Kargoya verilmiş
 - **DELIVERED**: Teslim edilmiş
 - **CANCELLED**: İptal edilmiş
+
+## 👤 Kullanıcı Rolleri
+
+### Role Types
+- **CUSTOMER**: Normal müşteri hesabı
+- **ADMIN**: Yönetici hesabı (tam yetki)
+
+### Admin Özellikleri
+- Ürün yönetimi (CRUD)
+- Kategori yönetimi (CRUD)
+- Sipariş durumu güncelleme
+- Sipariş istatistikleri görüntüleme
+- Toplu ürün yükleme
+- Düşük stok ürünleri görüntüleme
+
+### Customer Özellikleri
+- Profil görüntüleme
+- Sipariş oluşturma
+- Sipariş geçmişi görüntüleme
+- Sipariş iptali
 
 ## 📝 Loglama
 
@@ -350,3 +464,30 @@ Bu proje MIT lisansı altında lisanslanmıştır.
 ---
 
 💡 **İpucu**: API'yi test etmek için Swagger UI'ı kullanabilir veya Postman collection'ımızı import edebilirsiniz.
+
+## 📋 Postman Collection
+
+Proje ile birlikte gelen `postman_collection.json` dosyası ile API'yi kolayca test edebilirsiniz:
+
+### Özellikler:
+- ✅ Otomatik token yönetimi
+- ✅ Admin ve Customer login endpoint'leri
+- ✅ Tüm CRUD operasyonları
+- ✅ File upload testleri
+- ✅ Pre-configured variables
+
+### Kullanım:
+1. Postman'i açın
+2. `postman_collection.json` dosyasını import edin
+3. `Login (Admin)` endpoint'ini çalıştırın
+4. Token otomatik kaydedilecek
+5. Diğer endpoint'leri test edin
+
+### Test Sırası:
+```
+1. Login (Admin) → Token al
+2. Create Category (Admin) → Kategori oluştur
+3. Create Product (Admin) → Ürün oluştur
+4. Create Order → Sipariş oluştur
+5. Upload Image → Resim yükle
+```

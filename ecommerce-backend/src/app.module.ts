@@ -4,13 +4,17 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { User, Category, Product, Order, OrderItem } from './entities';
-import { AuthModule } from './modules/auth/auth.module';
-import { UsersModule } from './modules/users/users.module';
-import { ProductsModule } from './modules/products/products.module';
-import { CategoriesModule } from './modules/categories/categories.module';
-import { OrdersModule } from './modules/orders/orders.module';
-import { UploadModule } from './modules/upload/upload.module';
+import { User } from './domain/users/repository/entity/user.entity';
+import { Category } from './domain/categories/repository/entity/category.entity';
+import { Product } from './domain/products/repository/entity/product.entity';
+import { Order } from './domain/orders/repository/entity/order.entity';
+import { OrderItem } from './domain/orders/repository/entity/order-item.entity';
+import { AuthModule } from './domain/auth/auth.module';
+import { UsersModule } from './domain/users/users.module';
+import { ProductsModule } from './domain/products/products.module';
+import { CategoryModule } from './domain/categories/category.module';
+import { OrdersModule } from './domain/orders/orders.module';
+import { UploadModule } from './domain/upload/upload.module';
 import { SanitizationMiddleware } from './common/middleware/sanitization.middleware';
 
 @Module({
@@ -41,7 +45,7 @@ import { SanitizationMiddleware } from './common/middleware/sanitization.middlew
     AuthModule,
     UsersModule,
     ProductsModule,
-    CategoriesModule,
+    CategoryModule,
     OrdersModule,
     UploadModule,
   ],

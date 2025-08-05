@@ -290,14 +290,16 @@ src/
 ## 🧪 Test
 
 ```bash
-# Unit tests
-npm run test
+# API testleri için Postman collection kullanın
+# postman_collection.json dosyasını import edin
 
-# E2E tests
-npm run test:e2e
+# Swagger dokümantasyonu
+# http://localhost:3000/api
 
-# Test coverage
-npm run test:cov
+# Manuel test için:
+# 1. Register endpoint'i ile kullanıcı oluşturun
+# 2. Login endpoint'i ile token alın
+# 3. Diğer endpoint'leri test edin
 ```
 
 ## 📊 CSV Toplu Yükleme

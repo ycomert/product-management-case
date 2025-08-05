@@ -450,8 +450,8 @@ Bu proje MIT lisansı altında lisanslanmıştır.
 
 ## 📞 İletişim
 
-- Email: your-email@example.com
-- GitHub: @your-username
+- Email: c8mert@gmail.com
+- GitHub: @ycomert
 
 ## 🔗 Faydalı Linkler
 
